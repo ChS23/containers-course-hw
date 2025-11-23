@@ -1,0 +1,17 @@
+[project]
+name = "containers-course-hw"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "advanced-alchemy>=1.8.0",
+    "aiohttp>=3.13.2",
+    "aiosmtplib>=5.0.0",
+    "litestar>=2.18.0",
+    "litestar-asyncpg>=0.5.0",
+    "litestar-granian>=0.14.2",
+    "python-dotenv>=1.2.1",
+    "python-slugify>=8.0.4",
+    "structlog>=25.5.0",
+]
