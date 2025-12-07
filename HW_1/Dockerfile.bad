@@ -1,0 +1,20 @@
+
+FROM python:latest
+
+RUN apt update
+RUN apt install -y curl git build-essential
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+WORKDIR /app
+
+
+ADD . /app
+
+
+RUN uv sync
+
+EXPOSE 8000
+
+VOLUME ["/app/app/db"]     
+
+CMD uv run litestar run --host 0.0.0.0 --port 8000
