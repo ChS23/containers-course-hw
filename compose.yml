@@ -1,0 +1,114 @@
+services:
+  # Init service - одноразовая инициализация БД
+  app-init:
+    build:
+      context: .
+      dockerfile: Dockerfile.good
+    image: event-app:latest
+    container_name: event-app-init
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - event-network
+    entrypoint: ["uv", "run", "litestar", "database", "upgrade", "--no-prompt"]
+    restart: "no"
+
+  # Main application service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.good
+    image: event-app:latest
+    container_name: event-app
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - app-logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      app-init:
+        condition: service_completed_successfully
+    networks:
+      - event-network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import socket; s=socket.socket(); s.connect((\"localhost\", 8000)); s.close()'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    entrypoint: ["bash", "/app/app/scripts/entry"]
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:16-alpine
+    container_name: event-postgres
+    env_file: .env
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - event-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Redis cache
+  redis:
+    image: redis:7-alpine
+    container_name: event-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - event-network
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  event-network:
+    driver: bridge
+    name: event-network
+
+volumes:
+  postgres-data:
+    driver: local
+    name: event-postgres-data
+  redis-data:
+    driver: local
+    name: event-redis-data
+  app-logs:
+    driver: local
+    name: event-app-logs
