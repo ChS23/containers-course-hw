@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres
+  labels:
+    app: postgres
 spec:
   replicas: 1
   selector:
@@ -28,3 +30,5 @@ spec:
         envFrom:
         - configMapRef:
             name: postgres-configmap
+        - secretRef:
+            name: postgres-secret

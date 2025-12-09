@@ -4,5 +4,6 @@ metadata:
   name: postgres-configmap
   labels:
     app: postgres
+    tier: database
 data:
-  POSTGRES_DB: "postgres"
+  POSTGRES_DB: "event_management"
