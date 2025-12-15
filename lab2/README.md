@@ -415,21 +415,3 @@ docker compose run --rm app python -m app.db.init_db
 ```
 
 - `--rm` — удалить контейнер после выполнения
-
----
-
-## Чек-лист соответствия требованиям
-
-| Требование | Статус | Где реализовано |
-|------------|--------|-----------------|
-| Минимум 1 init + 2 app сервиса | ✅ | app-init + app + postgres + redis |
-| Автоматическая сборка из Dockerfile | ✅ | `build: { dockerfile: Dockerfile.good }` |
-| Присвоение имени образу | ✅ | `image: event-app:latest` |
-| Жёсткое именование контейнеров | ✅ | `container_name: event-app` и т.д. |
-| Минимум один с depends_on | ✅ | app, app-init зависят от postgres/redis |
-| Минимум один с volume | ✅ | postgres, redis, app имеют volumes |
-| Минимум один с портом | ✅ | app (8000), postgres (5432), redis (6379) |
-| Минимум один с command/entrypoint | ✅ | app (entrypoint), app-init (command), redis (command) |
-| Healthcheck | ✅ | app, postgres, redis |
-| Env-ы в .env файле | ✅ | `env_file: .env` |
-| Явно указана network | ✅ | `event-network` для всех сервисов |
